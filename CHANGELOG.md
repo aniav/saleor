@@ -158,3 +158,4 @@ Following plugins are now marked as deprecated:
 | Avalara | `mirumee.taxes.avalara` | [Saleor Avalara AvaTax App](https://apps.saleor.io/apps/avatax) |
 
 We plan to remove deprecated plugins in the future versions of Saleor.
+- Add a new `variant` field on `AssignedVariantAttributeValue`. First part of a simplification of Attribute - ProductVariant relation from #12881. by @aniav
