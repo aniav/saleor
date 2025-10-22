@@ -144,6 +144,9 @@ Like `reference`, the `single-reference` type can target entities defined in the
 
 - Fixed a bug where a Checkout partially paid by Transaction(s) and partially paid by Gift Card(s) could not be completed due to `CHECKOUT_NOT_FULLY_PAID` error. Checkout authorize and charge statuses are now recalculcated more reliably. Status calculcation is now taking into account available gift cards balance.
 
+- Added a new `variant` field on `AssignedVariantAttributeValue`. First part of a simplification of Attribute - ProductVariant relation from #12881.
+
+
 ### Deprecations
 
 Following plugins are now marked as deprecated:
@@ -158,4 +161,3 @@ Following plugins are now marked as deprecated:
 | Avalara | `mirumee.taxes.avalara` | [Saleor Avalara AvaTax App](https://apps.saleor.io/apps/avatax) |
 
 We plan to remove deprecated plugins in the future versions of Saleor.
-- Add a new `variant` field on `AssignedVariantAttributeValue`. First part of a simplification of Attribute - ProductVariant relation from #12881. by @aniav
