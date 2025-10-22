@@ -16,38 +16,6 @@ from .model_helpers import (
 )
 
 
-@pytest.fixture
-def attribute_1():
-    attr = Attribute.objects.create(
-        slug="attribute-1",
-        name="Attribute 1",
-        input_type=AttributeInputType.DROPDOWN,
-        type=AttributeType.PRODUCT_TYPE,
-    )
-    AttributeValue.objects.create(
-        attribute=attr,
-        name="Value 1",
-        slug="value-1",
-    )
-    return attr
-
-
-@pytest.fixture
-def attribute_2():
-    attr = Attribute.objects.create(
-        slug="attribute-2",
-        name="Attribute 2",
-        input_type=AttributeInputType.DROPDOWN,
-        type=AttributeType.PRODUCT_TYPE,
-    )
-    AttributeValue.objects.create(
-        attribute=attr,
-        name="Value 1",
-        slug="value-1",
-    )
-    return attr
-
-
 def test_associate_attribute_to_non_product_instance(color_attribute):
     instance = ProductType()
     attribute = color_attribute
@@ -249,11 +217,34 @@ def test_associate_attribute_to_instance_duplicated_values(
     }
 
 
-def test_validate_attribute_owns_values(attribute_1, attribute_2):
+def test_validate_attribute_owns_values():
+    attribute_1 = Attribute.objects.create(
+        slug="attribute-1",
+        name="Attribute 1",
+        input_type=AttributeInputType.DROPDOWN,
+        type=AttributeType.PRODUCT_TYPE,
+    )
+    value_1 = AttributeValue.objects.create(
+        attribute=attribute_1,
+        name="Value 1",
+        slug="value-1",
+    )
+
+    attribute_2 = Attribute.objects.create(
+        slug="attribute-2",
+        name="Attribute 2",
+        input_type=AttributeInputType.DROPDOWN,
+        type=AttributeType.PRODUCT_TYPE,
+    )
+    value_2 = AttributeValue.objects.create(
+        attribute=attribute_2,
+        name="Value 1",
+        slug="value-1",
+    )
     # given
     attr_val_map = {
-        attribute_1.id: [attribute_1.values.first()],
-        attribute_2.id: [attribute_2.values.first()],
+        attribute_1.id: [value_1],
+        attribute_2.id: [value_2],
     }
 
     # when
@@ -261,6 +252,6 @@ def test_validate_attribute_owns_values(attribute_1, attribute_2):
 
     # then
     assert attr_val_map == {
-        attribute_1.id: [attribute_1.values.first()],
-        attribute_2.id: [attribute_2.values.first()],
+        attribute_1.id: [value_1],
+        attribute_2.id: [value_2],
     }
