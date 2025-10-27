@@ -15,7 +15,7 @@ All notable, unreleased changes to this project will be documented in this file.
 
 - Fix send order confirmation email to staff - #18342 by @Shaokun-X
 
-- Added a new `variant` field on `AssignedVariantAttributeValue`. First part of a simplification of Attribute - ProductVariant relation from #12881.
+- [TODO FILL IN] Second part of a simplification of Attribute - ProductVariant relation from #12881.
 
 
 ### Deprecations
