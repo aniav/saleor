@@ -146,7 +146,7 @@ class ProductVariantDelete(ModelDeleteMutation, ModelWithExtRefMutation):
     def delete_assigned_attribute_values(instance):
         with transaction.atomic():
             locked_ids = attribute_value_qs_select_for_update().filter(
-                variantassignments__variant_id=instance.id,
+                variantvalueassignment__variant_id=instance.id,
                 attribute__input_type__in=AttributeInputType.TYPES_WITH_UNIQUE_VALUES,
             )
             attribute_models.AttributeValue.objects.filter(

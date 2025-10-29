@@ -90,7 +90,7 @@ class AttributeValueUpdate(AttributeValueCreate, ModelWithExtRefMutation):
     @classmethod
     def _mark_products_search_index_dirty(cls, instance):
         variants = product_models.ProductVariant.objects.filter(
-            Exists(instance.variantassignments.filter(variant_id=OuterRef("id")))
+            Exists(instance.variantvalueassignment.filter(variant_id=OuterRef("id")))
         )
         products = product_models.Product.objects.filter(
             Q(search_index_dirty=False)

@@ -60,13 +60,20 @@ class ProductTypeDelete(ModelDeleteMutation):
         attributes = attribute_models.Attribute.objects.filter(
             input_type__in=AttributeInputType.TYPES_WITH_UNIQUE_VALUES
         )
-        assigned_values = attribute_models.AssignedProductAttributeValue.objects.filter(
-            product__product_type_id=instance_pk
+        assigned_product_values = (
+            attribute_models.AssignedProductAttributeValue.objects.filter(
+                product__product_type_id=instance_pk
+            )
+        )
+        assigned_variant_values = (
+            attribute_models.AssignedVariantAttributeValue.objects.filter(
+                variant__product__product_type_id=instance_pk
+            )
         )
         attribute_models.AttributeValue.objects.filter(
             Exists(attributes.filter(id=OuterRef("attribute_id"))),
             (
-                Q(Exists(assigned_values.filter(value_id=OuterRef("id"))))
-                | Q(variantassignments__assignment__product_type_id=instance_pk)
+                Q(Exists(assigned_product_values.filter(value_id=OuterRef("id"))))
+                | Q(Exists(assigned_variant_values.filter(value_id=OuterRef("id"))))
             ),
         ).delete()
