@@ -526,7 +526,7 @@ class AttributeValueTranslation(Translation):
                 if assigned_variant_attribute_value := (
                     attribute_value.variantvalueassignment.first()
                 ):
-                    if variant := assigned_variant_attribute_value.assignment.variant:
+                    if variant := assigned_variant_attribute_value.variant:
                         context["product_variant_id"] = variant.id
                         context["product_id"] = variant.product_id
                 elif assigned_product_attribute_value := (

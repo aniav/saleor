@@ -24,7 +24,7 @@ def get_product_ids_to_search_index_update_for_attribute_values(
     )
     product_ids = product_models.Product.objects.filter(
         Exists(assigned_product_values.filter(product_id=OuterRef("id")))
-        | Exists(assigned_variant_values.filter(product_id=OuterRef("id")))
+        | Exists(assigned_variant_values.filter(variant_id=OuterRef("id")))
     ).values_list("id", flat=True)
     return list(product_ids)
 
