@@ -456,7 +456,7 @@ def fetch_checkout_lines(
         # assigned_values = variant.attributevalues.all()
         prefetch_related_fields.extend(
             [
-                "variant__product__product_type__attributevariant"
+                "variant__product__product_type__attributevariant",
                 "variant__attributevalues__value",
             ]
         )

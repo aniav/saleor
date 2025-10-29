@@ -148,13 +148,13 @@ def test_associate_attribute_to_variant_instance_multiple_values(
     values = attribute.values.all()
 
     associate_attribute_values_to_instance(
-        variant, {attribute.id: [values[0], values[1]]}
+        variant, {attribute.id: [values[1], values[0]]}
     )
 
     # Ensure the new assignment was created and ordered correctly
     assigned_values = (
         AssignedVariantAttributeValue.objects.filter(
-            page_id=variant.pk, value__attribute_id=attribute.id
+            variant_id=variant.pk, value__attribute_id=attribute.id
         )
         .prefetch_related("value")
         .order_by("sort_order")

@@ -150,10 +150,6 @@ def _overwrite_values(
     )
 
     # Create new assignments
-    # Spend on db query to check values that are in the db so that we can use bulk_create
-    # to set the new assignments
-    # This code will be able to use bulk_create option ignore_conflicts once
-    # unique_together is set for product + value on AssignedProductAttributeValue
     values_order_map = defaultdict(list)
     assigned_attr_values_instances = []
 

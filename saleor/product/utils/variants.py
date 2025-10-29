@@ -19,8 +19,15 @@ def generate_and_set_variant_name(
     """Generate ProductVariant's name based on its attributes."""
     attributes_display = []
 
-    values_qs = variant.attributevalues.all()
-    attributes_display.append(", ".join([str(value) for value in values_qs]))
+    assigned_attributes = variant.product.product_type.attributevariant.filter(
+        variant_selection=True,
+        attribute__type=AttributeType.PRODUCT_TYPE,
+    )
+    for assigned_attribute in assigned_attributes.iterator(chunk_size=1000):
+        values_qs = variant.attributevalues.filter(
+            value__attribute_id=assigned_attribute.attribute_id
+        )
+        attributes_display.append(", ".join([str(value.value) for value in values_qs]))
 
     name = " / ".join(sorted(attributes_display))
     if not name:
