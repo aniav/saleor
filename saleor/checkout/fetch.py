@@ -450,10 +450,14 @@ def fetch_checkout_lines(
         "discounts__promotion_rule__promotion",
     ]
     if prefetch_variant_attributes:
+        # This is only used in webhooks right now and the code utilising these
+        # lines
+        # attribute_products = variant.product.product_type.attributevariant.all()
+        # assigned_values = variant.attributevalues.all()
         prefetch_related_fields.extend(
             [
-                "variant__attributes__assignment__attribute",
-                "variant__attributes__values",
+                "variant__product__product_type__attributevariant"
+                "variant__attributevalues__value",
             ]
         )
     lines = checkout.lines.select_related(*select_related_fields).prefetch_related(

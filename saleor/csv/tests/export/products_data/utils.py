@@ -8,6 +8,7 @@ from .....attribute.models import (
     AssignedProductAttributeValue,
     Attribute,
     AttributeProduct,
+    AttributeVariant,
 )
 from .....core.utils.editorjs import clean_editor_js
 
@@ -46,16 +47,23 @@ def add_product_attribute_data_to_expected_data(data, product, attribute_ids, pk
 
 
 def add_variant_attribute_data_to_expected_data(data, variant, attribute_ids, pk=None):
-    for assigned_attribute in variant.attributes.all():
+    assigned_attributes = AttributeVariant.objects.filter(
+        product_type=variant.product.product_type, attribute_id__in=attribute_ids
+    ).prefetch_related("attribute")
+
+    for assigned_attribute in assigned_attributes:
         header = f"{assigned_attribute.attribute.slug} (variant attribute)"
-        if str(assigned_attribute.attribute.pk) in attribute_ids:
-            value_instance = assigned_attribute.values.first()
-            attribute = assigned_attribute.attribute
-            value = get_attribute_value(attribute, value_instance)
-            if pk:
-                data[pk][header] = value
-            else:
-                data[header] = value
+        attribute = assigned_attribute.attribute
+
+        assigned_value = variant.attributevalues.filter(
+            value__attribute_id=attribute.pk
+        ).first()
+        value_instance = assigned_value.value
+        value = get_attribute_value(attribute, value_instance)
+        if pk:
+            data[pk][header] = value
+        else:
+            data[header] = value
 
     return data
 

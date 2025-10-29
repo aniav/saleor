@@ -1,6 +1,9 @@
 import pytest
 
-from ...attribute.models import AssignedPageAttributeValue
+from ...attribute.models import (
+    AssignedPageAttributeValue,
+    AssignedVariantAttributeValue,
+)
 from ...product.models import ProductType
 from .. import AttributeInputType, AttributeType
 from ..models import Attribute, AttributeValue
@@ -148,12 +151,19 @@ def test_associate_attribute_to_variant_instance_multiple_values(
         variant, {attribute.id: [values[0], values[1]]}
     )
 
-    new_assignment = variant.attributes.last()
     # Ensure the new assignment was created and ordered correctly
-    assert new_assignment.values.count() == 2
-    assert list(
-        new_assignment.variantvalueassignment.values_list("value_id", "sort_order")
-    ) == [(values[0].pk, 0), (values[1].pk, 1)]
+    assigned_values = (
+        AssignedVariantAttributeValue.objects.filter(
+            page_id=variant.pk, value__attribute_id=attribute.id
+        )
+        .prefetch_related("value")
+        .order_by("sort_order")
+    )
+    assert len(assigned_values) == 2
+    assert assigned_values[0].value == values[1]
+    assert assigned_values[0].sort_order == 0
+    assert assigned_values[1].value == values[0]
+    assert assigned_values[1].sort_order == 1
 
 
 def test_associate_attribute_to_product_copies_data_over_to_new_field(
