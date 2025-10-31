@@ -286,7 +286,7 @@ def prepare_variants_relations_data(
 
     if attribute_ids:
         variant_fields = ProductExportFields.VARIANT_ATTRIBUTE_FIELDS
-        fields_for_attrs = {"variant_id"}
+        fields_for_attrs = {"attributevalues__variant_id"}
         fields_for_attrs.update(variant_fields.values())
 
         # Get all variants that belong to the product

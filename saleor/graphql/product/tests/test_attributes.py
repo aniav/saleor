@@ -6,6 +6,7 @@ import pytest
 from ....attribute import AttributeInputType, AttributeType
 from ....attribute.models import (
     AssignedProductAttributeValue,
+    AssignedVariantAttributeValue,
     Attribute,
     AttributeProduct,
     AttributeValue,
@@ -14,6 +15,7 @@ from ....attribute.models import (
 from ....attribute.tests.model_helpers import (
     get_product_attribute_values,
     get_product_attributes,
+    get_variant_attributes,
 )
 from ....attribute.utils import associate_attribute_values_to_instance
 from ....product import ProductTypeKind
@@ -326,7 +328,7 @@ def test_resolve_attributes_with_hidden(
     variant_attribute = size_attribute
 
     expected_product_attribute_count = get_product_attributes(product).count() - 1
-    expected_variant_attribute_count = variant.attributes.count() - 1
+    expected_variant_attribute_count = get_variant_attributes(variant).count() - 1
 
     if is_staff:
         api_client = staff_api_client
@@ -356,14 +358,14 @@ def test_resolve_attribute_values(user_api_client, product, staff_user, channel_
     variant = product.variants.first()
 
     assert get_product_attributes(product).count() == 1
-    assert variant.attributes.count() == 1
+    assert get_variant_attributes(variant).count() == 1
 
     attribute = get_product_attributes(product).first()
     product_attribute_values = list(
         get_product_attribute_values(product, attribute).values_list("slug", flat=True)
     )
     variant_attribute_values = list(
-        variant.attributes.first().values.values_list("slug", flat=True)
+        get_variant_attributes(variant).first().values.values_list("slug", flat=True)
     )
 
     assert len(product_attribute_values) == 1
@@ -437,7 +439,7 @@ def test_resolve_attribute_values_non_assigned_to_node(
 
     # no additional values should be added
     assert product.attributevalues.count() == 1
-    assert variant.attributes.count() == 1
+    assert get_variant_attributes(variant).count() == 1
 
     product = get_graphql_content(api_client.post_graphql(query, variables))["data"][
         "products"
@@ -465,7 +467,7 @@ def test_resolve_assigned_attribute_without_values(
 
     # Remove all attributes and values from the product and its variant
     AssignedProductAttributeValue.objects.filter(product_id=product.pk).delete()
-    variant.attributesrelated.clear()
+    AssignedVariantAttributeValue.objects.filter(variant_id=variant.pk).delete()
 
     # Retrieve the product and variant's attributes
     products = get_graphql_content(

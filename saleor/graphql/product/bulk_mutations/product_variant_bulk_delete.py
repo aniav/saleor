@@ -102,7 +102,6 @@ class ProductVariantBulkDelete(ModelBulkDeleteMutation):
                 .filter(id__in=pks)
                 .prefetch_related(
                     "channel_listings",
-                    "attributes__values",
                     "variant_media",
                 )
             )

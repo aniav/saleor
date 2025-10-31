@@ -11,6 +11,8 @@ import pytest
 from .....attribute.tests.model_helpers import (
     get_product_attribute_values,
     get_product_attributes,
+    get_variant_attribute_values,
+    get_variant_attributes,
 )
 from .....core.exceptions import UnsupportedMediaProviderException
 from .....discount.utils.promotion import get_active_catalogue_promotion_rules
@@ -2218,18 +2220,24 @@ def test_product_bulk_create_with_variants(
     for variant in product_1_variants:
         assert variant.name in [variant_1_name, variant_2_name]
         assert variant.sku in [sku_1, sku_2]
-        attribute_assignment = variant.attributes.first()
-        assert variant.attributes.count() == 1
-        assert attribute_assignment.attribute == size_attribute
-        assert attribute_assignment.values.count() == 1
+
+        attributes = get_variant_attributes(variant)
+        assert len(attributes) == 1
+
+        assigned_values = get_variant_attribute_values(variant, attributes[0])
+        assert len(assigned_values) == 1
+        assert assigned_values[0].value.attribute == size_attribute
 
     for variant in product_2_variants:
         assert variant.name == variant_3_name
         assert variant.sku == sku_3
-        attribute_assignment = variant.attributes.first()
-        assert variant.attributes.count() == 1
-        assert attribute_assignment.attribute == size_attribute
-        assert attribute_assignment.values.count() == 1
+
+        attributes = get_variant_attributes(variant)
+        assert len(attributes) == 1
+
+        assigned_values = get_variant_attribute_values(variant, attributes[0])
+        assert len(assigned_values) == 1
+        assert assigned_values[0].value.attribute == size_attribute
 
 
 def test_product_bulk_create_with_variants_and_attributes_by_external_reference(

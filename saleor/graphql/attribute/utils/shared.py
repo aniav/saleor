@@ -96,6 +96,8 @@ def get_assignment_model_and_fk(instance: T_INSTANCE):
         return attribute_models.AssignedPageAttributeValue, "page_id"
     if isinstance(instance, product_models.Product):
         return attribute_models.AssignedProductAttributeValue, "product_id"
+    if isinstance(instance, product_models.ProductVariant):
+        return attribute_models.AssignedVariantAttributeValue, "variant_id"
     raise NotImplementedError(
         f"Assignment for {type(instance).__name__} not implemented."
     )

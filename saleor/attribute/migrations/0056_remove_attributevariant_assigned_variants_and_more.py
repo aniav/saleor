@@ -73,13 +73,19 @@ class Migration(migrations.Migration):
             """
             ALTER TABLE attribute_assignedvariantattribute
             DROP CONSTRAINT IF EXISTS
-            product_assignedvari_assignment_id_8fdbffe8_fk_product_a;
+            attribute_assignedva_assignment_id_5b9e4c71_fk_attribute;
+
+
             ALTER TABLE attribute_assignedvariantattribute
             DROP CONSTRAINT IF EXISTS
-            product_assignedvari_variant_id_27483e6a_fk_product_p;
+            attribute_assignedva_variant_id_a6f7b549_fk_product_p;
+
+
             ALTER TABLE attribute_assignedvariantattributevalue
             DROP CONSTRAINT IF EXISTS
             attribute_assignedva_assignment_id_040f7499_fk_attribute;
+
+
             ALTER TABLE attribute_assignedvariantattributevalue
             DROP CONSTRAINT IF EXISTS
             attribute_assignedva_value_id_4bbdc9fa_fk_attribute;

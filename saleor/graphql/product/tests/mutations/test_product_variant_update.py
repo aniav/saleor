@@ -11,6 +11,10 @@ from measurement.measures import Weight
 
 from .....attribute import AttributeInputType
 from .....attribute.models import AttributeValue
+from .....attribute.tests.model_helpers import (
+    get_variant_attribute_values,
+    get_variant_attributes,
+)
 from .....attribute.utils import associate_attribute_values_to_instance
 from .....product.error_codes import ProductErrorCode
 from ....core.utils import snake_to_camel_case
@@ -841,8 +845,8 @@ def test_update_product_variant_with_current_attribute(
     variant = product.variants.first()
     sku = str(uuid4())[:12]
     assert not variant.sku == sku
-    assert variant.attributes.first().values.first().slug == "red"
-    assert variant.attributes.last().values.first().slug == "small"
+    assert get_variant_attributes(variant).first().values.first().slug == "red"
+    assert get_variant_attributes(variant).last().values.first().slug == "small"
 
     variant_id = graphene.Node.to_global_id("ProductVariant", variant.pk)
     color_attribute_id = graphene.Node.to_global_id("Attribute", color_attribute.pk)
@@ -868,8 +872,8 @@ def test_update_product_variant_with_current_attribute(
     assert not data["errors"]
     variant.refresh_from_db()
     assert variant.sku == sku
-    assert variant.attributes.first().values.first().slug == "red"
-    assert variant.attributes.last().values.first().slug == "small"
+    assert get_variant_attributes(variant).first().values.first().slug == "red"
+    assert get_variant_attributes(variant).last().values.first().slug == "small"
 
 
 def test_update_product_variant_with_matching_slugs_different_values(
@@ -883,8 +887,8 @@ def test_update_product_variant_with_matching_slugs_different_values(
     variant = product.variants.first()
     sku = str(uuid4())[:12]
     assert not variant.sku == sku
-    assert variant.attributes.first().values.first().slug == "red"
-    assert variant.attributes.last().values.first().slug == "small"
+    assert get_variant_attributes(variant).first().values.first().slug == "red"
+    assert get_variant_attributes(variant).last().values.first().slug == "small"
 
     variant_id = graphene.Node.to_global_id("ProductVariant", variant.pk)
     color_attribute_id = graphene.Node.to_global_id("Attribute", color_attribute.pk)
@@ -910,8 +914,8 @@ def test_update_product_variant_with_matching_slugs_different_values(
     assert not data["errors"]
     variant.refresh_from_db()
     assert variant.sku == sku
-    assert variant.attributes.first().values.first().slug == "red-2"
-    assert variant.attributes.last().values.first().slug == "small-2"
+    assert get_variant_attributes(variant).first().values.first().slug == "red-2"
+    assert get_variant_attributes(variant).last().values.first().slug == "small-2"
 
 
 def test_update_product_variant_with_value_that_matching_existing_slug(
@@ -1845,8 +1849,8 @@ def test_update_product_variant_with_new_attribute(
     variant = product.variants.first()
     sku = str(uuid4())[:12]
     assert not variant.sku == sku
-    assert variant.attributes.first().values.first().slug == "red"
-    assert variant.attributes.last().values.first().slug == "small"
+    assert get_variant_attributes(variant).first().values.first().slug == "red"
+    assert get_variant_attributes(variant).last().values.first().slug == "small"
 
     variant_id = graphene.Node.to_global_id("ProductVariant", variant.pk)
     color_attribute_id = graphene.Node.to_global_id("Attribute", color_attribute.pk)
@@ -1872,8 +1876,8 @@ def test_update_product_variant_with_new_attribute(
     assert not data["errors"]
     variant.refresh_from_db()
     assert variant.sku == sku
-    assert variant.attributes.first().values.first().slug == "red"
-    assert variant.attributes.last().values.first().slug == "big"
+    assert get_variant_attributes(variant).first().values.first().slug == "red"
+    assert get_variant_attributes(variant).last().values.first().slug == "big"
 
 
 def test_update_product_variant_clear_attributes(
@@ -1885,7 +1889,7 @@ def test_update_product_variant_clear_attributes(
     sku = str(uuid4())[:12]
     assert not variant.sku == sku
 
-    variant_attr = variant.attributes.first()
+    variant_attr = get_variant_attributes(variant).first()
     attribute = variant_attr.assignment.attribute
     attribute.input_type = AttributeInputType.MULTISELECT
     attribute.value_required = False
@@ -1949,10 +1953,10 @@ def test_update_product_variant_with_existing_values(
         },
     )
 
-    assert variant.attributes.first().values.first().slug == "red"
-    assert variant.attributes.last().values.first().slug == "small"
-    assert variant2.attributes.first().values.first().slug == "blue"
-    assert variant2.attributes.last().values.first().slug == "big"
+    assert get_variant_attributes(variant).first().values.first().slug == "red"
+    assert get_variant_attributes(variant).last().values.first().slug == "small"
+    assert get_variant_attributes(variant2).first().values.first().slug == "blue"
+    assert get_variant_attributes(variant2).last().values.first().slug == "big"
 
     color_attr_values_count = color_attribute.values.count()
     size_attr_values_count = size_attribute.values.count()
@@ -1998,9 +2002,9 @@ def test_update_product_variant_with_current_file_attribute(
     variant = product.variants.first()
     sku = str(uuid4())[:12]
     assert not variant.sku == sku
-    assert set(variant.attributes.first().values.values_list("slug", flat=True)) == {
-        "test_filetxt"
-    }
+    assert set(
+        get_variant_attributes(variant).first().values.values_list("slug", flat=True)
+    ) == {"test_filetxt"}
     second_value = file_attribute.values.last()
 
     variant_id = graphene.Node.to_global_id("ProductVariant", variant.pk)
@@ -2100,9 +2104,11 @@ def test_update_product_variant_with_file_attribute_new_value_is_not_created(
     assert not variant.sku == sku
 
     existing_value = file_attribute.values.first()
-    assert variant.attributes.filter(
-        assignment__attribute=file_attribute, values=existing_value
-    ).exists()
+    assert (
+        get_variant_attribute_values(variant, file_attribute)
+        .filter(value=existing_value)
+        .exists()
+    )
 
     variant_id = graphene.Node.to_global_id("ProductVariant", variant.pk)
     file_attribute_id = graphene.Node.to_global_id("Attribute", file_attribute.pk)
@@ -2721,8 +2727,10 @@ def test_update_product_variant_change_attribute_values_ordering(
         },
     )
 
+    attribute = get_variant_attributes(variant).first()
+    assert attribute == product_type_product_reference_attribute
     assert list(
-        variant.attributes.first().variantvalueassignment.values_list(
+        get_variant_attribute_values(variant, attribute).values_list(
             "value_id", flat=True
         )
     ) == [attr_value_3.pk, attr_value_2.pk, attr_value_1.pk]
@@ -2780,9 +2788,10 @@ def test_update_product_variant_change_attribute_values_ordering(
     assert assigned_values[1]["slug"] == expected_second_product.slug
     assert assigned_values[2]["slug"] == expected_third_product.slug
 
-    variant.refresh_from_db()
+    attribute = get_variant_attributes(variant).first()
+    assert attribute == product_type_product_reference_attribute
     assert list(
-        variant.attributes.first().variantvalueassignment.values_list(
+        get_variant_attribute_values(variant, attribute).values_list(
             "value_id", flat=True
         )
     ) == [attr_value_2.pk, attr_value_1.pk, attr_value_3.pk]
@@ -3613,8 +3622,8 @@ def test_update_product_variant_nothing_changed(
     color_attribute_id = graphene.Node.to_global_id("Attribute", color_attribute.pk)
     size_attribute_id = graphene.Node.to_global_id("Attribute", size_attribute.pk)
 
-    attribute_slug_1 = variant.attributes.first().values.first().slug
-    attribute_slug_2 = variant.attributes.last().values.first().slug
+    attribute_slug_1 = get_variant_attributes(variant).first().values.first().slug
+    attribute_slug_2 = get_variant_attributes(variant).last().values.first().slug
 
     input_fields = [
         snake_to_camel_case(key) for key in ProductVariantInput._meta.fields.keys()

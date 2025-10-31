@@ -6,6 +6,7 @@ from django.db.models.expressions import Exists, OuterRef
 from .....attribute import AttributeInputType
 from .....attribute.models import (
     AssignedProductAttributeValue,
+    AssignedVariantAttributeValue,
     Attribute,
     AttributeProduct,
     AttributeVariant,
@@ -47,24 +48,69 @@ def add_product_attribute_data_to_expected_data(data, product, attribute_ids, pk
 
 
 def add_variant_attribute_data_to_expected_data(data, variant, attribute_ids, pk=None):
-    assigned_attributes = AttributeVariant.objects.filter(
-        product_type=variant.product.product_type, attribute_id__in=attribute_ids
-    ).prefetch_related("attribute")
+    # for assigned_attribute in variant.attributes.all():
+    #     header = f"{assigned_attribute.attribute.slug} (variant attribute)"
+    #     if str(assigned_attribute.attribute.pk) in attribute_ids:
+    #         value_instance = assigned_attribute.values.first()
+    #         attribute = assigned_attribute.attribute
+    #         value = get_attribute_value(attribute, value_instance)
+    #         if pk:
+    #             data[pk][header] = value
+    #         else:
+    #             data[header] = value
+    # return data
 
-    for assigned_attribute in assigned_attributes:
-        header = f"{assigned_attribute.attribute.slug} (variant attribute)"
-        attribute = assigned_attribute.attribute
+    # for attribute in variant.product.product_type.variant_attributes.all():
+    #     if attribute.pk not in attribute_ids:
+    #         continue
 
-        assigned_value = variant.attributevalues.filter(
-            value__attribute_id=attribute.pk
-        ).first()
-        value_instance = assigned_value.value
-        value = get_attribute_value(attribute, value_instance)
-        if pk:
-            data[pk][header] = value
-        else:
-            data[header] = value
+    #     header = f"{attribute.slug} (variant attribute)"
 
+    #     assigned_value = (
+    #         variant.attributevalues.filter(value__attribute_id=attribute.pk)
+    #         .order_by("sort_order", "pk")
+    #         .first()
+    #     )
+    #     if not assigned_value:
+    #         continue
+    #     value_instance = assigned_value.value
+    #     value = get_attribute_value(attribute, value_instance)
+    #     if pk:
+    #         data[pk][header] = value
+    #     else:
+    #         data[header] = value
+
+    # return data
+
+    variant_attributes = AttributeVariant.objects.filter(
+        product_type_id=variant.product.product_type_id
+    )
+    attributes = (
+        Attribute.objects.filter(
+            Exists(variant_attributes.filter(attribute_id=OuterRef("id")))
+        )
+        .order_by("attributevariant__sort_order")
+        .iterator(chunk_size=1000)
+    )
+    assigned_values = AssignedVariantAttributeValue.objects.filter(
+        variant_id=variant.pk
+    )
+    prefetch_related_objects(assigned_values, "value")
+
+    values_map = defaultdict(list)
+    for av in assigned_values:
+        values_map[av.value.attribute_id].append(av.value)
+
+    for attribute in attributes:
+        header = f"{attribute.slug} (variant attribute)"
+        attribute_values = values_map[attribute.id]
+        value_instance = attribute_values[0] if attribute_values else None
+        if str(attribute.pk) in attribute_ids and value_instance:
+            value = get_attribute_value(attribute, value_instance)
+            if pk:
+                data[pk][header] = value
+            else:
+                data[header] = value
     return data
 
 
