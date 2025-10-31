@@ -2,7 +2,7 @@ import datetime
 import json
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, NamedTuple, cast
+from typing import TYPE_CHECKING, NamedTuple
 
 from django.db.models import Model
 from django.db.models.expressions import Exists, OuterRef
@@ -96,6 +96,8 @@ def get_assignment_model_and_fk(instance: T_INSTANCE):
         return attribute_models.AssignedPageAttributeValue, "page_id"
     if isinstance(instance, product_models.Product):
         return attribute_models.AssignedProductAttributeValue, "product_id"
+    if isinstance(instance, product_models.ProductVariant):
+        return attribute_models.AssignedVariantAttributeValue, "variant_id"
     raise NotImplementedError(
         f"Assignment for {type(instance).__name__} not implemented."
     )
@@ -105,41 +107,12 @@ def get_assigned_attribute_value_if_exists(
     instance: T_INSTANCE, attribute: "Attribute", lookup_field: str, value
 ):
     """Unified method to find an existing assigned value."""
-    if isinstance(instance, product_models.ProductVariant):
-        # variant has old attribute structure so need to handle it differently
-        return get_variant_assigned_attribute_value_if_exists(
-            instance, attribute, lookup_field, value
-        )
-
     assignment_model, instance_fk = get_assignment_model_and_fk(instance)
     assigned_values = assignment_model.objects.filter(**{instance_fk: instance.pk})
     return attribute_models.AttributeValue.objects.filter(
         Exists(assigned_values.filter(value_id=OuterRef("id"))),
         attribute_id=attribute.pk,
         **{lookup_field: value},
-    ).first()
-
-
-def get_variant_assigned_attribute_value_if_exists(
-    instance: T_INSTANCE, attribute: "Attribute", lookup_field: str, value: str
-):
-    variant = cast(product_models.ProductVariant, instance)
-    attribute_variant = Exists(
-        attribute_models.AttributeVariant.objects.filter(
-            pk=OuterRef("assignment_id"),
-            attribute_id=attribute.pk,
-        )
-    )
-    assigned_variant = Exists(
-        attribute_models.AssignedVariantAttribute.objects.filter(
-            attribute_variant
-        ).filter(
-            variant_id=variant.pk,
-            values=OuterRef("pk"),
-        )
-    )
-    return attribute_models.AttributeValue.objects.filter(
-        assigned_variant, **{lookup_field: value}
     ).first()
 
 
@@ -179,23 +152,26 @@ def get_attribute_to_values_map_for_variant(
     attribute_values: defaultdict[int, list[str | None | datetime.datetime]] = (
         defaultdict(list)
     )
-    for assigned_variant_attribute in variant.attributes.all():
-        attribute = assigned_variant_attribute.attribute
+    assigned_variant_attributes = variant.attributevalues.prefetch_related(
+        "value", "value__attribute"
+    ).all()
+    for assigned_variant_attribute in assigned_variant_attributes:
+        attr_value = assigned_variant_attribute.value
+        attribute = attr_value.attribute
         attribute_id = attribute.pk
-        for attr_value in assigned_variant_attribute.values.all():
-            if attribute.input_type == AttributeInputType.PLAIN_TEXT:
-                attribute_values[attribute_id].append(attr_value.plain_text)
-            elif attribute.input_type == AttributeInputType.RICH_TEXT:
-                attribute_values[attribute_id].append(json.dumps(attr_value.rich_text))
-            elif attribute.input_type == AttributeInputType.NUMERIC:
-                attribute_values[attribute_id].append(str(attr_value.numeric))
-            elif attribute.input_type in [
-                AttributeInputType.DATE,
-                AttributeInputType.DATE_TIME,
-            ]:
-                attribute_values[attribute_id].append(attr_value.date_time)
-            else:
-                attribute_values[attribute_id].append(attr_value.slug)
+        if attribute.input_type == AttributeInputType.PLAIN_TEXT:
+            attribute_values[attribute_id].append(attr_value.plain_text)
+        elif attribute.input_type == AttributeInputType.RICH_TEXT:
+            attribute_values[attribute_id].append(json.dumps(attr_value.rich_text))
+        elif attribute.input_type == AttributeInputType.NUMERIC:
+            attribute_values[attribute_id].append(str(attr_value.numeric))
+        elif attribute.input_type in [
+            AttributeInputType.DATE,
+            AttributeInputType.DATE_TIME,
+        ]:
+            attribute_values[attribute_id].append(attr_value.date_time)
+        else:
+            attribute_values[attribute_id].append(attr_value.slug)
     return attribute_values
 
 

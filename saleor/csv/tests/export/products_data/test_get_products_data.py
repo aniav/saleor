@@ -53,8 +53,8 @@ def test_get_products_data(product, product_with_image, collection, image, chann
 
     variants = []
     for variant in product.variants.all():
-        for attr in variant.attributes.all():
-            attribute_ids.append(str(attr.assignment.attribute.pk))
+        for attr in variant.attributevalues.all():
+            attribute_ids.append(str(attr.value.attribute_id))
         variant.weight = Weight(kg=3)
         variants.append(variant)
 

@@ -46,16 +46,21 @@ def add_product_attribute_data_to_expected_data(data, product, attribute_ids, pk
 
 
 def add_variant_attribute_data_to_expected_data(data, variant, attribute_ids, pk=None):
-    for assigned_attribute in variant.attributes.all():
-        header = f"{assigned_attribute.attribute.slug} (variant attribute)"
-        if str(assigned_attribute.attribute.pk) in attribute_ids:
-            value_instance = assigned_attribute.values.first()
-            attribute = assigned_attribute.attribute
-            value = get_attribute_value(attribute, value_instance)
-            if pk:
-                data[pk][header] = value
-            else:
-                data[header] = value
+    for attribute in variant.product.product_type.variant_attributes.all():
+        header = f"{attribute.slug} (variant attribute)"
+
+        if attribute.pk not in attribute_ids:
+            continue
+
+        assigned_value = variant.attributevalues.filter(
+            value__attribute_id=attribute.pk
+        ).first()
+        value_instance = assigned_value.value
+        value = get_attribute_value(attribute, value_instance)
+        if pk:
+            data[pk][header] = value
+        else:
+            data[header] = value
 
     return data
 

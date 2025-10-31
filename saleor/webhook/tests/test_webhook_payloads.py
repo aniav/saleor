@@ -1137,7 +1137,7 @@ def test_generate_product_variant_deleted_payload(
 ):
     variant = product_with_variant_with_two_attributes.variants.prefetch_related(
         "channel_listings",
-        "attributes__values",
+        "attributevalues__value",
         "variant_media",
     ).first()
     ProductVariant.objects.filter(id=variant.id).delete()

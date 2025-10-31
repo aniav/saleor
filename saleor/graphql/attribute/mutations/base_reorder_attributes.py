@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
 import graphene
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.exceptions import ValidationError
 
 from ....core.tracing import traced_atomic_transaction
 from ...core.inputs import ReorderInput
@@ -80,10 +80,10 @@ class BaseReorderAttributeValuesMutation(BaseMutation):
         moves = data["moves"]
 
         instance = cls.get_instance(instance_id)
-        attribute_assignment = cls.get_attribute_assignment(
+        cls.validate_attribute_assignment(
             instance, instance_type, attribute_id, error_code_enum
         )
-        values_m2m = getattr(attribute_assignment, assignment_lookup)
+        values_m2m = getattr(instance, assignment_lookup)
 
         try:
             operations = cls.prepare_operations(moves, values_m2m)
@@ -101,28 +101,10 @@ class BaseReorderAttributeValuesMutation(BaseMutation):
         pass
 
     @classmethod
-    def get_attribute_assignment(
+    def validate_attribute_assignment(
         cls, instance, instance_type, attribute_id: str, error_code_enum
     ):
-        attribute_pk = cls.get_global_id_or_error(
-            attribute_id, only_type=Attribute, field="attribute_id"
-        )
-
-        try:
-            attribute_assignment = instance.attributes.prefetch_related("values").get(
-                assignment__attribute_id=attribute_pk
-            )
-        except ObjectDoesNotExist as e:
-            raise ValidationError(
-                {
-                    "attribute_id": ValidationError(
-                        f"Couldn't resolve to a {instance_type} "
-                        f"attribute: {attribute_id}.",
-                        code=error_code_enum.NOT_FOUND.value,
-                    )
-                }
-            ) from e
-        return attribute_assignment
+        pass
 
     @classmethod
     def prepare_operations(cls, moves: ReorderInput, values: "QuerySet"):

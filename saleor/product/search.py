@@ -11,15 +11,15 @@ from ..attribute.search import get_search_vectors_for_attribute_values
 from ..core.postgres import FlatConcatSearchVector, NoValidationSearchVector
 from ..core.utils.batches import queryset_in_batches
 from ..page.models import Page
-from ..product.models import Product
+from ..product.models import Product, ProductVariant
 
 if TYPE_CHECKING:
-    from django.db.models import QuerySet
+    pass
 
 PRODUCT_SEARCH_FIELDS = ["name", "description_plaintext"]
 PRODUCT_FIELDS_TO_PREFETCH = [
-    "variants__attributes__values",
-    "variants__attributes__assignment__attribute",
+    "variants__product__product_type__attributevariant",
+    "variants__attributevalues__value",
     "attributevalues__value",
     "product_type__attributeproduct__attribute",
 ]
@@ -89,7 +89,7 @@ def prepare_product_search_vector_value(
         NoValidationSearchVector(
             Value(product.description_plaintext), config="simple", weight="C"
         ),
-        *generate_attributes_search_vector_value(
+        *generate_product_attributes_search_vector_value(
             product, page_id_to_title_map=page_id_to_title_map
         ),
         *generate_variants_search_vector_value(product),
@@ -113,13 +113,11 @@ def generate_variants_search_vector_value(
     ]
     if search_vectors:
         for variant in variants:
-            search_vectors += generate_attributes_search_vector_value_with_assignment(
-                variant.attributes.all()[: settings.PRODUCT_MAX_INDEXED_ATTRIBUTES]
-            )
+            search_vectors += generate_variant_attributes_search_vector_value(variant)
     return search_vectors
 
 
-def generate_attributes_search_vector_value(
+def generate_product_attributes_search_vector_value(
     product: "Product",
     *,
     page_id_to_title_map: dict[int, str] | None = None,
@@ -153,22 +151,36 @@ def generate_attributes_search_vector_value(
     return search_vectors
 
 
-def generate_attributes_search_vector_value_with_assignment(
-    assigned_attributes: "QuerySet",
+def generate_variant_attributes_search_vector_value(
+    variant: "ProductVariant",
+    *,
+    page_id_to_title_map: dict[int, str] | None = None,
 ) -> list[NoValidationSearchVector]:
     """Prepare `search_vector` value for assigned attributes.
 
     Method should receive assigned attributes with prefetched `values`
-    and `assignment__attribute`.
     """
+    product_attributes = variant.product.product_type.attributeproduct.all()
+
+    attributes = [
+        product_attribute.attribute for product_attribute in product_attributes
+    ][: settings.PRODUCT_MAX_INDEXED_ATTRIBUTES]
+
+    assigned_values = variant.attributevalues.all()
+
     search_vectors = []
-    for assigned_attribute in assigned_attributes:
-        attribute = assigned_attribute.assignment.attribute
-        values = assigned_attribute.values.all()[
+
+    values_map = defaultdict(list)
+    for av in assigned_values:
+        values_map[av.value.attribute_id].append(av.value)
+
+    for attribute in attributes:
+        values = values_map[attribute.pk][
             : settings.PRODUCT_MAX_INDEXED_ATTRIBUTE_VALUES
         ]
+
         search_vectors += get_search_vectors_for_attribute_values(
-            attribute, values, weight="B"
+            attribute, values, page_id_to_title_map=page_id_to_title_map, weight="B"
         )
     return search_vectors
 

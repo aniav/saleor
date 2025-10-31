@@ -177,9 +177,17 @@ def serialize_variant_attributes(variant: "ProductVariant") -> list[dict]:
         reference_id = graphene.Node.to_global_id(attribute.entity_type, reference_pk)
         return reference_id
 
-    for attr in variant.attributes.all():
-        attr_id = graphene.Node.to_global_id("Attribute", attr.assignment.attribute_id)
-        attribute = attr.assignment.attribute
+    attribute_products = variant.product.product_type.attributevariant.all()
+    assigned_values = variant.attributevalues.all()
+
+    values_map = defaultdict(list)
+    for av in assigned_values:
+        values_map[av.value.attribute_id].append(av.value)
+
+    for attribute_product in attribute_products:
+        attribute = attribute_product.attribute
+
+        attr_id = graphene.Node.to_global_id("Attribute", attribute.pk)
         attr_data: dict[Any, Any] = {
             "name": attribute.name,
             "input_type": attribute.input_type,
@@ -190,7 +198,7 @@ def serialize_variant_attributes(variant: "ProductVariant") -> list[dict]:
             "values": [],
         }
 
-        for attr_value in attr.values.all():
+        for attr_value in values_map[attribute.pk]:
             attr_slug = attr_value.slug
             value: dict[
                 str,

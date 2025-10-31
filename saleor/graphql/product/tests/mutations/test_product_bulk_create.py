@@ -8,6 +8,7 @@ import graphene
 import PIL
 import pytest
 
+from .....attribute.models import AssignedVariantAttributeValue
 from .....attribute.tests.model_helpers import (
     get_product_attribute_values,
     get_product_attributes,
@@ -2218,18 +2219,22 @@ def test_product_bulk_create_with_variants(
     for variant in product_1_variants:
         assert variant.name in [variant_1_name, variant_2_name]
         assert variant.sku in [sku_1, sku_2]
-        attribute_assignment = variant.attributes.first()
-        assert variant.attributes.count() == 1
-        assert attribute_assignment.attribute == size_attribute
-        assert attribute_assignment.values.count() == 1
+
+        assigned_values = AssignedVariantAttributeValue.objects.filter(
+            variant_id=variant.pk
+        )
+        assert assigned_values.count() == 1
+        assert assigned_values.first().value.attribute == size_attribute
 
     for variant in product_2_variants:
         assert variant.name == variant_3_name
         assert variant.sku == sku_3
-        attribute_assignment = variant.attributes.first()
-        assert variant.attributes.count() == 1
-        assert attribute_assignment.attribute == size_attribute
-        assert attribute_assignment.values.count() == 1
+
+        assigned_values = AssignedVariantAttributeValue.objects.filter(
+            variant_id=variant.pk
+        )
+        assert assigned_values.count() == 1
+        assert assigned_values.first().value.attribute == size_attribute
 
 
 def test_product_bulk_create_with_variants_and_attributes_by_external_reference(
@@ -2371,18 +2376,22 @@ def test_product_bulk_create_with_variants_and_attributes_by_external_reference(
     for variant in product_1_variants:
         assert variant.name in [variant_1_name, variant_2_name]
         assert variant.sku in [sku_1, sku_2]
-        attribute_assignment = variant.attributes.first()
-        assert variant.attributes.count() == 1
-        assert attribute_assignment.attribute == size_attribute
-        assert attribute_assignment.values.count() == 1
+
+        assigned_values = AssignedVariantAttributeValue.objects.filter(
+            variant_id=variant.pk
+        )
+        assert assigned_values.count() == 1
+        assert assigned_values.first().value.attribute == size_attribute
 
     for variant in product_2_variants:
         assert variant.name == variant_3_name
         assert variant.sku == sku_3
-        attribute_assignment = variant.attributes.first()
-        assert variant.attributes.count() == 1
-        assert attribute_assignment.attribute == size_attribute
-        assert attribute_assignment.values.count() == 1
+
+        assigned_values = AssignedVariantAttributeValue.objects.filter(
+            variant_id=variant.pk
+        )
+        assert assigned_values.count() == 1
+        assert assigned_values.first().value.attribute == size_attribute
 
 
 def test_product_bulk_create_with_variants_with_duplicated_sku(

@@ -1,14 +1,16 @@
 from django.db.models.expressions import Exists, OuterRef
 
 from ...page.models import Page
-from ...product.models import Product
+from ...product.models import Product, ProductVariant
 from ..models import (
     AssignedPageAttributeValue,
     AssignedProductAttributeValue,
+    AssignedVariantAttributeValue,
     Attribute,
     AttributePage,
     AttributeProduct,
     AttributeValue,
+    AttributeVariant,
 )
 
 
@@ -60,3 +62,36 @@ def get_product_attribute_values(product: Product, attribute: Attribute):
         ),
         attribute_id=attribute.pk,
     ).order_by("productvalueassignment__sort_order")
+
+
+def get_variant_attributes(variant: ProductVariant):
+    """Get variant attributes filtered by product_type.
+
+    ProductType defines which attributes can be assigned to a variant and
+    we have to filter out the attributes on the instance by the ones attached to the
+    product_type.
+    """
+    variant_attributes = AttributeVariant.objects.filter(
+        product_type_id=variant.product.product_type_id
+    )
+    return Attribute.objects.filter(
+        Exists(variant_attributes.filter(attribute_id=OuterRef("id")))
+    ).order_by("storefront_search_position", "slug")
+
+
+def get_variant_attribute_values(variant: ProductVariant, attribute: Attribute):
+    """Get values assigned to a variant.
+
+    Note: this doesn't filter out attributes that might have been unassigned from the
+    product type.
+    """
+    assigned_values = AssignedVariantAttributeValue.objects.filter(
+        variant_id=variant.pk
+    )
+
+    return AttributeValue.objects.filter(
+        Exists(
+            assigned_values.filter(value_id=OuterRef("id")),
+        ),
+        attribute_id=attribute.pk,
+    ).order_by("variantvalueassignment__sort_order")
