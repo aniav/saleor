@@ -735,7 +735,7 @@ class ProductVariantReorderAttributeValues(BaseReorderAttributeValuesMutation):
     def perform_mutation(cls, _root, _info: ResolveInfo, /, **data):
         variant_id = data["variant_id"]
         variant = cls.perform(
-            variant_id, "variant", data, "variantvalueassignment", ProductErrorCode
+            variant_id, "variant", data, "attributevalues", ProductErrorCode
         )
 
         return ProductVariantReorderAttributeValues(
@@ -771,7 +771,7 @@ class ProductVariantReorderAttributeValues(BaseReorderAttributeValuesMutation):
         )
 
         attribute_assignment = attribute_models.AttributeVariant.objects.filter(
-            attribute_id=attribute_pk, product_type_id=instance.product_type_id
+            attribute_id=attribute_pk, product_type_id=instance.product.product_type_id
         ).exists()
 
         if not attribute_assignment:

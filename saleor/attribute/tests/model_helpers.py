@@ -80,7 +80,7 @@ def get_variant_attributes(variant: ProductVariant):
 
 
 def get_variant_attribute_values(variant: ProductVariant, attribute: Attribute):
-    """Get values assigned to a product.
+    """Get values assigned to a variant.
 
     Note: this doesn't filter out attributes that might have been unassigned from the
     product type.

@@ -27,6 +27,23 @@ class AssignedVariantAttributeValue(SortableModel):
         return self.variant.attributevalues.all()
 
 
+# class AssignedVariantAttribute(BaseAssignedAttribute):
+#     """Associate a product type attribute and selected values to a given variant."""
+
+#     variant = models.ForeignKey(
+#         ProductVariant, related_name="attributes", on_delete=models.CASCADE
+#     )
+#     assignment = models.ForeignKey(
+#         "AttributeVariant", on_delete=models.CASCADE, related_name="variantassignments"
+#     )
+#     values = models.ManyToManyField(
+#         AttributeValue,
+#         blank=True,
+#         related_name="variantassignments",
+#         through=AssignedVariantAttributeValue,
+#     )
+
+
 class AttributeVariant(SortableModel):
     attribute = models.ForeignKey(
         "Attribute", related_name="attributevariant", on_delete=models.CASCADE

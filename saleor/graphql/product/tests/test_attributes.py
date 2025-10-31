@@ -439,7 +439,7 @@ def test_resolve_attribute_values_non_assigned_to_node(
 
     # no additional values should be added
     assert product.attributevalues.count() == 1
-    assert get_variant_attributes(variant).count() == 1
+    assert variant.attributevalues.count() == 1
 
     product = get_graphql_content(api_client.post_graphql(query, variables))["data"][
         "products"
