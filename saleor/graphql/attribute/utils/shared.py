@@ -152,23 +152,26 @@ def get_attribute_to_values_map_for_variant(
     attribute_values: defaultdict[int, list[str | None | datetime.datetime]] = (
         defaultdict(list)
     )
-    for assigned_variant_attribute in variant.attributes.all():
-        attribute = assigned_variant_attribute.attribute
+    assigned_variant_attributes = variant.attributevalues.prefetch_related(
+        "value", "value__attribute"
+    ).all()
+    for assigned_variant_attribute in assigned_variant_attributes:
+        attr_value = assigned_variant_attribute.value
+        attribute = attr_value.attribute
         attribute_id = attribute.pk
-        for attr_value in assigned_variant_attribute.values.all():
-            if attribute.input_type == AttributeInputType.PLAIN_TEXT:
-                attribute_values[attribute_id].append(attr_value.plain_text)
-            elif attribute.input_type == AttributeInputType.RICH_TEXT:
-                attribute_values[attribute_id].append(json.dumps(attr_value.rich_text))
-            elif attribute.input_type == AttributeInputType.NUMERIC:
-                attribute_values[attribute_id].append(str(attr_value.numeric))
-            elif attribute.input_type in [
-                AttributeInputType.DATE,
-                AttributeInputType.DATE_TIME,
-            ]:
-                attribute_values[attribute_id].append(attr_value.date_time)
-            else:
-                attribute_values[attribute_id].append(attr_value.slug)
+        if attribute.input_type == AttributeInputType.PLAIN_TEXT:
+            attribute_values[attribute_id].append(attr_value.plain_text)
+        elif attribute.input_type == AttributeInputType.RICH_TEXT:
+            attribute_values[attribute_id].append(json.dumps(attr_value.rich_text))
+        elif attribute.input_type == AttributeInputType.NUMERIC:
+            attribute_values[attribute_id].append(str(attr_value.numeric))
+        elif attribute.input_type in [
+            AttributeInputType.DATE,
+            AttributeInputType.DATE_TIME,
+        ]:
+            attribute_values[attribute_id].append(attr_value.date_time)
+        else:
+            attribute_values[attribute_id].append(attr_value.slug)
     return attribute_values
 
 
