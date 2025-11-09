@@ -7,7 +7,6 @@ from .base import (
 from .page import AssignedPageAttributeValue, AttributePage
 from .product import AssignedProductAttributeValue, AttributeProduct
 from .product_variant import (
-    AssignedVariantAttribute,
     AssignedVariantAttributeValue,
     AttributeVariant,
 )
@@ -21,7 +20,6 @@ __all__ = [
     "AttributePage",
     "AssignedProductAttributeValue",
     "AttributeProduct",
-    "AssignedVariantAttribute",
     "AssignedVariantAttributeValue",
     "AttributeVariant",
 ]

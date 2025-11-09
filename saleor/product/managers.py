@@ -239,8 +239,8 @@ class ProductsQueryset(models.QuerySet):
     def prefetched_for_webhook(self, single_object=True):
         common_fields = (
             "media",
-            "variants__attributes__values",
-            "variants__attributes__assignment__attribute",
+            "variants__product__product_type__attributevariant",
+            "variants__attributevalues__value",
             "variants__variant_media__media",
             "variants__stocks__allocations",
             "variants__channel_listings__channel",
@@ -308,8 +308,8 @@ class ProductVariantQueryset(models.QuerySet):
 
     def prefetched_for_webhook(self):
         return self.prefetch_related(
-            "attributes__values",
-            "attributes__assignment__attribute",
+            "product__product_type__attributevariant__attribute",
+            "attributevalues__value",
             "variant_media__media",
         )
 
